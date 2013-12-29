@@ -5,8 +5,8 @@ from PySide.QtCore import QBuffer, QByteArray, QIODevice, QThread
 
 
 APP_NAME = 'Insta'
-VERSION = '1.0.0'
-API_KEY = 'YOUR_IMGUR_API_KEY'
+VERSION = '1.1.0'
+API_KEY = '5df8062c468eb678dd194db7e2216387'
 ICON_PATH = 'icon.png'
 
 def build_path_in_resource(filename):
@@ -25,12 +25,17 @@ class Insta:
         self.clipboard = QApplication.clipboard()
         self.tray = QSystemTrayIcon(QIcon(build_path_in_resource(ICON_PATH)))
         self.setupUI()
+        self.isEnable = True
 
 
     def setupUI(self):
         menu = QMenu()
+        self.switchAction = menu.addAction('Stop')
+        self.switchAction.triggered.connect(self.switchEnable)
+        menu.addSeparator()
         exitAction = menu.addAction("Exit")
         exitAction.triggered.connect(sys.exit)
+
         self.tray.setContextMenu(menu)
         self.tray.show()
         self.tray.setToolTip(APP_NAME)
@@ -43,7 +48,7 @@ class Insta:
 
 
     def copyHandler(self):
-      if self.clipboard.mimeData().hasImage():
+      if self.isEnable and self.clipboard.mimeData().hasImage():
           image = self.clipboard.image()
           byteArray = QByteArray()
           buf = QBuffer(byteArray)
@@ -53,6 +58,14 @@ class Insta:
           self.thread = NetThread(str(byteArray.toBase64()))
           self.thread.finished.connect(self.onUploadFinished)
           self.thread.start()
+
+
+    def switchEnable(self):
+        self.isEnable = not self.isEnable
+        if self.isEnable:
+            self.switchAction.setText('Stop')
+        else:
+            self.switchAction.setText('Start')
 
 
     def onUploadFinished(self):
